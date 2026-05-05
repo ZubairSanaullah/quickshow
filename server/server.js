@@ -18,13 +18,16 @@ try {
   process.exit(1); // Exit if DB is critical
 }
 
-// Middlewares
+// 1. Inngest route MUST come before other middleware to avoid discovery issues
+app.use("/api/inngest", serve({ client: inngest, functions }));
+
+// 2. Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(clerkMiddleware());
 
-// Debug: Log loaded functions to ensure they exist for discovery
-console.log("Inngest: Loaded functions:", functions.map(f => f.id));
+// Debug: Log loaded functions
+console.log("Inngest: Registered functions:", functions.map(f => f.opts.id));
 
 // API Routes
 app.get("/", (req, res) => {
@@ -59,9 +62,6 @@ app.post("/api/webhooks/clerk", async (req, res) => {
     res.status(500).json({ error: "Webhook failed" });
   }
 });
-
-// Inngest route - Ensure this is reachable by Inngest
-app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // Error handling middleware (Optional but recommended)
 app.use((err, req, res, next) => {
