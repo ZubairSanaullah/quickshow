@@ -23,6 +23,9 @@ app.use(cors());
 app.use(express.json());
 app.use(clerkMiddleware());
 
+// Debug: Log loaded functions to ensure they exist for discovery
+console.log("Inngest: Loaded functions:", functions.map(f => f.id));
+
 // API Routes
 app.get("/", (req, res) => {
   res.json({ message: "Server is live", timestamp: new Date().toISOString() });
