@@ -28,6 +28,35 @@ app.get("/", (req, res) => {
   res.json({ message: "Server is live", timestamp: new Date().toISOString() });
 });
 
+// Clerk Webhook Route (Bridge to Inngest)
+app.post("/api/webhooks/clerk", async (req, res) => {
+  try {
+    const { data, type } = req.body;
+
+    // Map Clerk types to Inngest events
+    const eventMap = {
+      "user.created": "clerk/user.created",
+      "user.updated": "clerk/user.updated",
+      "user.deleted": "clerk/user.deleted",
+    };
+
+    const eventName = eventMap[type];
+
+    if (eventName) {
+      await inngest.send({
+        name: eventName,
+        data: data,
+      });
+      console.log(`Event sent to Inngest: ${eventName}`);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: "Webhook failed" });
+  }
+});
+
 // Inngest route - Ensure this is reachable by Inngest
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
